@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fortress Notes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              ink: '#241f21',
+              paper: '#fffdf4',
+              alert: '#db4c40',
+              marker: '#f9c307',
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #ccc; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #aaa; 
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #444; 
+      }
+      .dark ::-webkit-scrollbar-thumb:hover {
+        background: #555; 
+      }
+      /* Markdown Styles */
+      .markdown-body ul { list-style-type: disc; padding-left: 1.5em; }
+      .markdown-body ol { list-style-type: decimal; padding-left: 1.5em; }
+      .markdown-body blockquote { border-left: 4px solid #ccc; padding-left: 1em; color: #666; }
+      .markdown-body code { background: rgba(0,0,0,0.1); padding: 0.2em 0.4em; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+      .dark .markdown-body code { background: rgba(255,255,255,0.1); color: #ddd; }
+      .markdown-body pre { background: #f4f4f4; padding: 1em; border-radius: 8px; overflow-x: auto; }
+      .dark .markdown-body pre { background: #1a1a1a; }
+      .markdown-body pre code { background: transparent; padding: 0; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.1/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "react/": "https://esm.sh/react@^19.2.1/",
+    "react": "https://esm.sh/react@^19.2.1",
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
+    "crypto-js": "https://esm.sh/crypto-js@^4.2.0",
+    "uuid": "https://esm.sh/uuid@^13.0.0",
+    "@phosphor-icons/react": "https://esm.sh/@phosphor-icons/react@^2.1.10",
+    "react-markdown": "https://esm.sh/react-markdown@9.0.1",
+    "remark-gfm": "https://esm.sh/remark-gfm@4.0.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-paper text-ink dark:bg-ink dark:text-paper transition-colors duration-300">
+    <div id="root"></div>
+  </body>
+</html>

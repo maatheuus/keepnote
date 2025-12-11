@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Fortress Notes",
+  "description": "A secure, encrypted note-taking application with AI-powered audio transcription.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
