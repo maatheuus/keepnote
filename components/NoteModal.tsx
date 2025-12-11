@@ -140,7 +140,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, onSave, initialN
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -150,79 +150,95 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, onSave, initialN
         />
         
         <motion.div 
-          initial={{ opacity: 0, y: 50, scale: 0.95 }}
+          initial={{ opacity: 0, y: 100, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 50, scale: 0.95 }}
-          className={`relative w-full max-w-2xl bg-paper dark:bg-[#241f21] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] flex flex-col ${color === 'dark' ? 'bg-gray-900' : ''}`}
+          exit={{ opacity: 0, y: 100, scale: 0.95 }}
+          className={`relative w-full h-full sm:h-auto sm:max-h-[90vh] max-w-2xl bg-paper dark:bg-[#241f21] sm:rounded-2xl shadow-2xl border-0 sm:border border-gray-200 dark:border-gray-700 flex flex-col ${color === 'dark' ? 'bg-gray-900' : ''}`}
         >
-          {/* Header */}
-          <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-800 gap-4 rounded-t-2xl bg-inherit">
-            <input
-              type="text"
-              placeholder="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="bg-transparent text-xl font-bold placeholder-gray-400 text-ink dark:text-paper outline-none w-full"
-            />
-            <div className="flex items-center gap-2 shrink-0">
+          {/* Header - Mobile Optimized */}
+          <div className="flex flex-col sm:flex-row justify-between p-4 border-b border-gray-100 dark:border-gray-800 gap-3 sm:gap-4 sm:items-center rounded-t-2xl bg-inherit">
+            
+            {/* Title Area */}
+            <div className="flex justify-between items-start w-full sm:w-auto sm:flex-1">
+               <input
+                type="text"
+                placeholder="Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="bg-transparent text-xl font-bold placeholder-gray-400 text-ink dark:text-paper outline-none w-full"
+              />
+              {/* Close button for mobile top-right */}
+              <button
+                onClick={handleSave}
+                className="sm:hidden p-2 -mr-2 -mt-2 text-gray-400 hover:text-alert transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Controls Area */}
+            <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
                {/* Priority Selector */}
                <CustomSelect 
                  value={priority}
                  options={PRIORITY_OPTIONS}
                  onChange={(val) => setPriority(val as Priority)}
-                 className="w-fit"
+                 className="w-32"
                />
 
-              <button
-                onClick={() => setIsPinned(!isPinned)}
-                className={`p-2 rounded-full transition-colors ${
-                  isPinned ? 'bg-ink text-paper dark:bg-paper dark:text-ink' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-                title="Pin Note"
-              >
-                <PushPin size={20} weight={isPinned ? 'fill' : 'regular'} />
-              </button>
-              
-              <button
-                onClick={() => setIsArchived(!isArchived)}
-                className={`p-2 rounded-full transition-colors ${
-                  isArchived ? 'bg-marker text-ink' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-                title="Archive Note"
-              >
-                <Archive size={20} weight={isArchived ? 'fill' : 'regular'} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setIsPinned(!isPinned)}
+                  className={`p-2 rounded-full transition-colors ${
+                    isPinned ? 'bg-ink text-paper dark:bg-paper dark:text-ink' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                  title="Pin Note"
+                >
+                  <PushPin size={20} weight={isPinned ? 'fill' : 'regular'} />
+                </button>
+                
+                <button
+                  onClick={() => setIsArchived(!isArchived)}
+                  className={`p-2 rounded-full transition-colors ${
+                    isArchived ? 'bg-marker text-ink' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                  title="Archive Note"
+                >
+                  <Archive size={20} weight={isArchived ? 'fill' : 'regular'} />
+                </button>
 
-              <button
-                onClick={handleSave}
-                className="p-2 text-gray-400 hover:text-alert transition-colors"
-              >
-                <X size={20} />
-              </button>
+                {/* Close Button Desktop */}
+                <button
+                  onClick={handleSave}
+                  className="hidden sm:block p-2 text-gray-400 hover:text-alert transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Toolbar */}
-          <div className="flex items-center gap-2 p-2 px-4 bg-gray-50 dark:bg-black/20 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
-             <button onClick={() => setFormat(prev => prev === 'text' ? 'json' : 'text')} className={`p-1.5 rounded flex items-center gap-1 text-xs font-bold ${format === 'json' ? 'bg-ink text-paper' : 'text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700'}`}>
+          {/* Toolbar - Scrollable */}
+          <div className="flex items-center gap-2 p-2 px-4 bg-gray-50 dark:bg-black/20 border-b border-gray-100 dark:border-gray-800 overflow-x-auto no-scrollbar">
+             <button onClick={() => setFormat(prev => prev === 'text' ? 'json' : 'text')} className={`shrink-0 p-1.5 rounded flex items-center gap-1 text-xs font-bold ${format === 'json' ? 'bg-ink text-paper' : 'text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700'}`}>
                 <Code size={16} /> {format === 'json' ? 'CODE' : 'TEXT'}
              </button>
              
-             <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1" />
+             <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1 shrink-0" />
 
-             <button onClick={insertTemplate} className="p-1.5 rounded text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 text-xs font-medium" title="Insert JSON Credential Template">
+             <button onClick={insertTemplate} className="shrink-0 p-1.5 rounded text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 text-xs font-medium" title="Insert JSON Credential Template">
                 JSON Template
              </button>
              
-             <button onClick={() => wrapText('**')} className="p-1.5 rounded text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 font-bold" title="Bold">B</button>
-             <button onClick={() => wrapText('_')} className="p-1.5 rounded text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 italic" title="Italic">I</button>
+             <button onClick={() => wrapText('**')} className="shrink-0 p-1.5 rounded text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 font-bold" title="Bold">B</button>
+             <button onClick={() => wrapText('_')} className="shrink-0 p-1.5 rounded text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 italic" title="Italic">I</button>
              
-             <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1" />
+             <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1 shrink-0" />
 
              <button 
                onClick={handleAutocomplete} 
                disabled={isCompleting}
-               className="flex items-center gap-1 text-xs font-bold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 px-2 py-1 rounded"
+               className="shrink-0 flex items-center gap-1 text-xs font-bold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 px-2 py-1 rounded"
               >
                 {isCompleting ? <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-600"></div> : <MagicWand size={16} />}
                 AI Complete
@@ -236,7 +252,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, onSave, initialN
               placeholder={format === 'json' ? '{\n  "key": "value"\n}' : "Take a note... (Markdown supported)"}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className={`w-full h-64 bg-transparent resize-none outline-none text-ink dark:text-paper text-sm leading-relaxed ${format === 'json' ? 'font-mono text-xs' : 'font-sans'}`}
+              className={`w-full h-full min-h-[200px] bg-transparent resize-none outline-none text-ink dark:text-paper text-sm leading-relaxed ${format === 'json' ? 'font-mono text-xs' : 'font-sans'}`}
             />
 
             {/* Audio Section */}
@@ -299,7 +315,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, onSave, initialN
           </div>
           
           {/* Footer Action */}
-          <div className="p-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center rounded-b-2xl bg-inherit">
+          <div className="p-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center sm:rounded-b-2xl bg-inherit mb-safe">
             
             {/* Color Palette */}
             <div className="flex gap-2">

@@ -7,7 +7,7 @@ import NoteCard from './components/NoteCard';
 import NoteModal from './components/NoteModal';
 import CustomSelect from './components/CustomSelect';
 import PinPad from './components/PinPad';
-import { MagnifyingGlass, Plus, SignOut, Moon, Sun, SortAscending, Archive, Trash, Note as NoteIcon, List, X, Shield, Key } from '@phosphor-icons/react';
+import { MagnifyingGlass, Plus, SignOut, Moon, Sun, SortAscending, Archive, Trash, Note as NoteIcon, List, X, Shield, Key, CircleNotch } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const APP_STORAGE_KEY = 'fortress_notes_data';
@@ -33,6 +33,7 @@ function App() {
     encryptionKey: null,
   });
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   
   // Quick Access State
   const [showPinSetup, setShowPinSetup] = useState(false);
@@ -70,16 +71,20 @@ function App() {
     }
   }, [theme]);
 
-  // Load User from Storage (Check if user exists)
+  // Load User from Storage (Check if user exists and needs PIN)
   useEffect(() => {
-    const storedUserStr = localStorage.getItem(USER_STORAGE_KEY);
-    if (storedUserStr) {
-      const storedUser: User = JSON.parse(storedUserStr);
-      // If encryptedMasterKey exists, show Quick Access PIN pad
-      if (storedUser.encryptedMasterKey) {
-        setIsQuickAccessMode(true);
+    const checkAuth = async () => {
+      const storedUserStr = localStorage.getItem(USER_STORAGE_KEY);
+      if (storedUserStr) {
+        const storedUser: User = JSON.parse(storedUserStr);
+        // If encryptedMasterKey exists, enable Quick Access Mode immediately
+        if (storedUser.encryptedMasterKey) {
+          setIsQuickAccessMode(true);
+        }
       }
-    }
+      setIsLoadingAuth(false);
+    };
+    checkAuth();
   }, []);
 
   // --- Auth Handlers ---
@@ -93,10 +98,10 @@ function App() {
     setAuthError(null);
     
     // Auto login after register
-    handleLogin(username, password);
+    handleLogin(username, password, true); // true = prompts for PIN setup
   };
 
-  const handleLogin = (username: string, password: string) => {
+  const handleLogin = (username: string, password: string, isRegistration = false) => {
     const storedUserStr = localStorage.getItem(USER_STORAGE_KEY);
     
     if (!storedUserStr) {
@@ -120,6 +125,12 @@ function App() {
       });
 
       loadNotes(derivedKey);
+
+      // Prompt for PIN setup if not exists or if it's a new registration
+      if (!storedUser.encryptedMasterKey || isRegistration) {
+        setShowPinSetup(true);
+      }
+
     } else {
       setAuthError("Incorrect password or username. Access denied.");
     }
@@ -164,14 +175,24 @@ function App() {
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
     setAuthState(prev => ({ ...prev, user: updatedUser }));
     setShowPinSetup(false);
-    alert("Quick access PIN enabled for this device.");
+    
+    // Feedback
+    // In a real app we might use a toast, here we just close the modal
   };
 
   const handleLogout = () => {
     setAuthState({ isAuthenticated: false, user: null, encryptionKey: null });
     setNotes([]);
     setAuthError(null);
-    setIsQuickAccessMode(true); // Go back to quick access if available
+    
+    // Check if we should go to PIN mode or Auth Form
+    const storedUserStr = localStorage.getItem(USER_STORAGE_KEY);
+    if (storedUserStr) {
+       const u = JSON.parse(storedUserStr);
+       if (u.encryptedMasterKey) {
+         setIsQuickAccessMode(true);
+       }
+    }
   };
 
   // --- Note Data Handlers ---
@@ -319,6 +340,14 @@ function App() {
 
   // --- Render ---
 
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-paper dark:bg-ink">
+        <CircleNotch size={48} className="animate-spin text-marker" />
+      </div>
+    );
+  }
+
   if (!authState.isAuthenticated) {
     if (isQuickAccessMode) {
       return (
@@ -397,7 +426,7 @@ function App() {
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
          >
            <Key size={20} />
-           {authState.user?.encryptedMasterKey ? "Reset Quick Access PIN" : "Setup Quick Access PIN"}
+           {authState.user?.encryptedMasterKey ? "Reset Quick Access PIN" : "Enable Quick Access"}
          </button>
       </div>
 
@@ -564,7 +593,7 @@ function App() {
                initial={{ opacity: 0, scale: 0.9 }}
                animate={{ opacity: 1, scale: 1 }}
                exit={{ opacity: 0, scale: 0.9 }}
-               className="bg-paper dark:bg-ink p-8 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-200 dark:border-gray-800"
+               className="bg-paper dark:bg-ink p-8 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-200 dark:border-gray-800 text-center"
              >
                 <PinPad 
                   isSetup 
