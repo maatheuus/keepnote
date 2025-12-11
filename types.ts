@@ -22,6 +22,7 @@ export interface User {
   username: string;
   passwordHash: string; // SHA256 hash for login verification
   salt: string;
+  encryptedMasterKey?: string; // Encrypted with PIN for quick access
 }
 
 export enum SortOption {

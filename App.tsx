@@ -6,7 +6,8 @@ import AuthForm from './components/AuthForm';
 import NoteCard from './components/NoteCard';
 import NoteModal from './components/NoteModal';
 import CustomSelect from './components/CustomSelect';
-import { MagnifyingGlass, Plus, SignOut, Moon, Sun, SortAscending, Archive, Trash, Note as NoteIcon, List, X } from '@phosphor-icons/react';
+import PinPad from './components/PinPad';
+import { MagnifyingGlass, Plus, SignOut, Moon, Sun, SortAscending, Archive, Trash, Note as NoteIcon, List, X, Shield, Key } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const APP_STORAGE_KEY = 'fortress_notes_data';
@@ -22,8 +23,8 @@ const SORT_OPTIONS = [
 ];
 
 function App() {
-  // Theme State
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  // Theme State - Default to Dark
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   // Auth State
   const [authState, setAuthState] = useState<AuthState>({
@@ -32,6 +33,11 @@ function App() {
     encryptionKey: null,
   });
   const [authError, setAuthError] = useState<string | null>(null);
+  
+  // Quick Access State
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [isQuickAccessMode, setIsQuickAccessMode] = useState(false);
+  const [quickAccessError, setQuickAccessError] = useState<string | undefined>(undefined);
 
   // Notes State
   const [notes, setNotes] = useState<Note[]>([]);
@@ -46,24 +52,33 @@ function App() {
 
   // Initialize Theme
   useEffect(() => {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setTheme('dark');
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+       setTheme('light');
+    } else {
+       setTheme('dark'); // Default to dark
     }
   }, []);
 
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
   }, [theme]);
 
   // Load User from Storage (Check if user exists)
   useEffect(() => {
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-    if (storedUser) {
-      // User exists, stay on login screen. AuthState default is false.
+    const storedUserStr = localStorage.getItem(USER_STORAGE_KEY);
+    if (storedUserStr) {
+      const storedUser: User = JSON.parse(storedUserStr);
+      // If encryptedMasterKey exists, show Quick Access PIN pad
+      if (storedUser.encryptedMasterKey) {
+        setIsQuickAccessMode(true);
+      }
     }
   }, []);
 
@@ -96,6 +111,7 @@ function App() {
       // Success: Set state and load notes
       const derivedKey = password + storedUser.salt; 
       setAuthError(null);
+      setIsQuickAccessMode(false);
       
       setAuthState({
         isAuthenticated: true,
@@ -109,10 +125,53 @@ function App() {
     }
   };
 
+  const handleQuickAccess = (pin: string) => {
+    const storedUserStr = localStorage.getItem(USER_STORAGE_KEY);
+    if (!storedUserStr) return;
+
+    const storedUser: User = JSON.parse(storedUserStr);
+    if (!storedUser.encryptedMasterKey) return;
+
+    // Attempt to decrypt the master key with the PIN
+    const derivedKey = decryptData(storedUser.encryptedMasterKey, pin);
+
+    if (derivedKey && typeof derivedKey === 'string' && derivedKey.length > 10) {
+      // Success
+      setAuthState({
+        isAuthenticated: true,
+        user: storedUser,
+        encryptionKey: derivedKey
+      });
+      loadNotes(derivedKey);
+      setIsQuickAccessMode(false);
+    } else {
+      setQuickAccessError("Invalid PIN");
+      setTimeout(() => setQuickAccessError(undefined), 1000);
+    }
+  };
+
+  const handleSetupPin = (pin: string) => {
+    if (!authState.user || !authState.encryptionKey) return;
+
+    // Encrypt the current session key with the PIN
+    const encryptedKey = encryptData(authState.encryptionKey, pin);
+    
+    const updatedUser: User = {
+      ...authState.user,
+      encryptedMasterKey: encryptedKey
+    };
+
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+    setAuthState(prev => ({ ...prev, user: updatedUser }));
+    setShowPinSetup(false);
+    alert("Quick access PIN enabled for this device.");
+  };
+
   const handleLogout = () => {
     setAuthState({ isAuthenticated: false, user: null, encryptionKey: null });
     setNotes([]);
     setAuthError(null);
+    setIsQuickAccessMode(true); // Go back to quick access if available
   };
 
   // --- Note Data Handlers ---
@@ -261,6 +320,23 @@ function App() {
   // --- Render ---
 
   if (!authState.isAuthenticated) {
+    if (isQuickAccessMode) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-paper dark:bg-ink transition-colors p-4">
+           <PinPad 
+             onComplete={handleQuickAccess} 
+             error={quickAccessError}
+           />
+           <button 
+             onClick={() => setIsQuickAccessMode(false)}
+             className="mt-6 text-sm text-gray-500 hover:text-marker transition-colors"
+           >
+             Log in with Password
+           </button>
+        </div>
+      );
+    }
+
     return (
       <AuthForm 
         onLogin={handleLogin} 
@@ -313,6 +389,17 @@ function App() {
           Trash
         </button>
       </nav>
+
+      {/* Settings Area */}
+      <div className="px-4 py-2">
+         <button 
+            onClick={() => { setShowPinSetup(true); setIsSidebarOpen(false); }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+         >
+           <Key size={20} />
+           {authState.user?.encryptedMasterKey ? "Reset Quick Access PIN" : "Setup Quick Access PIN"}
+         </button>
+      </div>
 
       <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <button
@@ -421,6 +508,7 @@ function App() {
                 onPin={handlePinNote}
                 onArchive={handleArchiveNote}
                 permanentDelete={viewMode === 'trash'}
+                searchQuery={searchQuery}
               />
             ))}
           </AnimatePresence>
@@ -467,6 +555,26 @@ function App() {
         onSave={handleSaveNote}
         initialNote={editingNote}
       />
+
+      {/* Pin Setup Modal */}
+      <AnimatePresence>
+        {showPinSetup && (
+           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+             <motion.div
+               initial={{ opacity: 0, scale: 0.9 }}
+               animate={{ opacity: 1, scale: 1 }}
+               exit={{ opacity: 0, scale: 0.9 }}
+               className="bg-paper dark:bg-ink p-8 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-200 dark:border-gray-800"
+             >
+                <PinPad 
+                  isSetup 
+                  onComplete={handleSetupPin}
+                  onCancel={() => setShowPinSetup(false)}
+                />
+             </motion.div>
+           </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

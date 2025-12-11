@@ -13,9 +13,10 @@ interface NoteCardProps {
   onPin: (e: React.MouseEvent, note: Note) => void;
   onArchive: (e: React.MouseEvent, note: Note) => void;
   permanentDelete?: boolean;
+  searchQuery?: string;
 }
 
-const NoteCard: React.FC<NoteCardProps> = ({ note, onClick, onDelete, onRestore, onPin, onArchive, permanentDelete }) => {
+const NoteCard: React.FC<NoteCardProps> = ({ note, onClick, onDelete, onRestore, onPin, onArchive, permanentDelete, searchQuery }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [showCopyMenu, setShowCopyMenu] = useState(false);
   const copyMenuRef = useRef<HTMLDivElement>(null);
@@ -61,6 +62,24 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onClick, onDelete, onRestore,
     setShowCopyMenu(false);
   };
 
+  // Helper to highlight text
+  const HighlightedText = ({ text, query }: { text: string, query?: string }) => {
+    if (!query || !text) return <>{text}</>;
+    
+    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+    return (
+      <>
+        {parts.map((part, i) => 
+          part.toLowerCase() === query.toLowerCase() ? (
+            <mark key={i} className="search-highlight">{part}</mark>
+          ) : (
+            part
+          )
+        )}
+      </>
+    );
+  };
+
   const priorityColor = {
     low: 'border-l-4 border-l-gray-300 dark:border-l-gray-600',
     medium: 'border-l-4 border-l-yellow-400',
@@ -91,7 +110,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onClick, onDelete, onRestore,
     >
       <div className="flex justify-between items-start mb-2">
         <h3 className={`font-semibold text-lg ${!note.title ? 'text-gray-400 italic' : ''} ${note.color === 'dark' ? 'text-paper' : ''}`}>
-          {note.title || 'Untitled'}
+           <HighlightedText text={note.title || 'Untitled'} query={searchQuery} />
         </h3>
         <div className="flex gap-1">
           {hasJson && (
@@ -105,7 +124,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onClick, onDelete, onRestore,
               className={`p-1.5 rounded-full transition-colors ${
                 note.isPinned 
                   ? 'bg-ink text-paper dark:bg-paper dark:text-ink' 
-                  : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100'
+                  : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 opacity-100 md:opacity-0 md:group-hover:opacity-100'
               }`}
             >
               <PushPin size={16} weight={note.isPinned ? 'fill' : 'regular'} />
@@ -137,7 +156,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onClick, onDelete, onRestore,
            <audio controls src={note.audioBase64} className="w-full h-8" />
            {note.transcript && (
              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 italic pl-1 border-l-2 border-marker">
-               "{note.transcript}"
+               "<HighlightedText text={note.transcript} query={searchQuery} />"
              </div>
            )}
         </div>
@@ -147,12 +166,13 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onClick, onDelete, onRestore,
         {note.tags.map(tag => (
           <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300">
             <Tag size={10} />
-            {tag}
+            <HighlightedText text={tag} query={searchQuery} />
           </span>
         ))}
       </div>
 
-      <div className="flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity pt-2 border-t border-transparent group-hover:border-gray-100 dark:group-hover:border-gray-700">
+      {/* Action Footer - Always visible on mobile, hover on desktop */}
+      <div className="flex justify-between items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity pt-2 border-t border-transparent group-hover:border-gray-100 dark:group-hover:border-gray-700">
         
         <div className="relative" ref={copyMenuRef}>
            <button

@@ -1,6 +1,14 @@
 {
-  "name": "Copy of Fortress Notes",
+  "name": "Fortress Notes",
+  "short_name": "Fortress",
   "description": "A secure, encrypted note-taking application with AI-powered audio transcription.",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/phosphor-icons/core/main/assets/fill/lock-key-fill.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ],
   "requestFramePermissions": [
     "microphone"
   ]
